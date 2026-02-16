@@ -1,0 +1,35 @@
+version: 2
+project_name: volume-knob-control
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=1
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+nfpms:
+  - id: default
+    package_name: volume-knob-control
+    vendor: AuroraNasa
+    description: Linux Knob Volume and Audio Output Switcher
+    maintainer: AuroraNasa
+    license: MIT
+    formats:
+      - deb
+    bindir: /usr/local/bin
+    contents:
+      - src: "dist/volume-knob-control_linux_amd64_v1/volume-knob-control"
+        dst: /usr/bin/volume-knob-control
+        type: "file"
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: 'checksums.txt'

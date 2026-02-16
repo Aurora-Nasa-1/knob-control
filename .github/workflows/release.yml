@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Install libevdev
+        run: sudo apt-get update && sudo apt-get install -y libevdev-dev
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-aur:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update PKGBUILD version and checksum
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
+          
+          # Download source tarball to calculate sha256
+          URL="https://github.com/${{ github.repository }}/archive/${GITHUB_REF_NAME}.tar.gz"
+          curl -L -o source.tar.gz "$URL"
+          SHA256=$(sha256sum source.tar.gz | awk '{print $1}')
+          
+          sed -i "s/sha256sums=('SKIP')/sha256sums=('${SHA256}')/" PKGBUILD
+          
+          echo "Updated PKGBUILD to version $VERSION with sha256 $SHA256"
+          cat PKGBUILD
+
+      - name: Publish AUR package
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
+        with:
+          pkgname: volume-knob-control
+          pkgbuild: ./PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to ${{ github.ref_name }}"
+          ssh_keyscan_types: rsa,ecdsa,ed25519
