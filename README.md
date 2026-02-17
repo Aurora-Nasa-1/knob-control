@@ -1,6 +1,6 @@
 # Linux Knob Controller
 
-[![AUR](https://img.shields.io/aur/version/volume-knob-control-bin)](https://aur.archlinux.org/packages/volume-knob-control-bin)
+[![AUR](https://img.shields.io/aur/version/knob-control)](https://aur.archlinux.org/packages/knob-control)
 
 ---
 
@@ -25,14 +25,9 @@
 
 ### 1. Arch Linux (AUR)
 
-**预编译包（推荐）**：
+**源码包**：
 ```bash
-yay -S volume-knob-control-bin
-```
-
-**源码编译包**：
-```bash
-yay -S volume-knob-control
+yay -S knob-control
 ```
 
 ### 2. 手动编译安装
